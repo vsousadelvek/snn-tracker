@@ -40,6 +40,7 @@ class Track:
         self.box = np.array(box, float)
         self.kf = Kalman(*self.centroid)
         self.trail = [self.centroid]
+        self.votes = []
         self.hits, self.misses = 1, 0
 
     @property

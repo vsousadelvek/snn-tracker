@@ -7,10 +7,12 @@ from collections import deque
 
 import cv2
 import numpy as np
+import torch
 
 from .events import DVSSimulator
 from .detect import detect
 from .tracker import Tracker
+from .blob_snn import BlobSNN, CLASSES, crop_events
 
 EV_W, EV_H = 320, 240
 COLORS = [(255, 200, 0), (0, 255, 200), (255, 100, 200), (100, 200, 255),
@@ -21,7 +23,17 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("video")
     ap.add_argument("-o", "--out", default="demo/tracking.mp4")
+    ap.add_argument("--no-classify", action="store_true")
     args = ap.parse_args()
+
+    clf = None
+    if not args.no_classify:
+        ckpt = torch.load("checkpoints/blob_snn.pt", map_location="cpu",
+                          weights_only=False)
+        classes = ckpt["classes"]
+        clf = BlobSNN(len(classes))
+        clf.load_state_dict(ckpt["model"])
+        clf.to("cuda" if torch.cuda.is_available() else "cpu").eval()
 
     cap = cv2.VideoCapture(args.video)
     fps = cap.get(cv2.CAP_PROP_FPS) or 30
@@ -66,10 +78,23 @@ def main():
         for t in tracks:
             x, y, w, h = t.box
             color = COLORS[t.id % len(COLORS)]
+            label = f"#{t.id}"
+
+            # SNN classifica o crop de eventos; voto por maioria no tempo
+            if clf is not None:
+                crop = crop_events(acc_ev, t.box).unsqueeze(0)
+                with torch.no_grad():
+                    p = torch.softmax(clf(crop.to(next(clf.parameters()).device)), 1)
+                cls_i = int(p.argmax(1))
+                t.votes.append(classes[cls_i])
+                if len(t.votes) > 15:
+                    t.votes.pop(0)
+                label = f"{max(set(t.votes), key=t.votes.count)} #{t.id}"
+
             for img, s in ((view, 1.0), (ev_img, 1.0)):
                 p1 = (int(x * sx), int(y * sy)); p2 = (int((x + w) * sx), int((y + h) * sy))
                 cv2.rectangle(img, p1, p2, color, 2)
-                cv2.putText(img, f"#{t.id}", (p1[0], max(12, p1[1] - 4)),
+                cv2.putText(img, label, (p1[0], max(12, p1[1] - 4)),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1)
             # trilha
             pts = [(int(c[0] * sx), int(c[1] * sy)) for c in t.trail]
@@ -89,7 +114,16 @@ def main():
                     1.0, (120, 120, 120), 2)
         cv2.putText(panel, f"tracks ativos: {len(tracks)}", (20, 190),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (200, 200, 200), 2)
-        cv2.putText(panel, f"descendo: {count_down}", (20, 250),
+        if clf is not None:
+            by_cls = {}
+            for t in tracks:
+                if t.votes:
+                    c = max(set(t.votes), key=t.votes.count)
+                    by_cls[c] = by_cls.get(c, 0) + 1
+            cv2.putText(panel, "  ".join(f"{k}:{v}" for k, v in by_cls.items()),
+                        (20, 220), cv2.FONT_HERSHEY_SIMPLEX, 0.6,
+                        (180, 180, 180), 1)
+        cv2.putText(panel, f"descendo: {count_down}", (20, 260),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
         cv2.putText(panel, f"subindo:  {count_up}", (20, 300),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 200, 255), 2)

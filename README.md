@@ -22,7 +22,12 @@ video -> eventos ON/OFF (DVS simulado)
 | Eventos | Contraste temporal em log-intensidade, ref adaptativa (`src/events.py`) |
 | Detecção | Dilatação morfológica + connected components + filtro de densidade de eventos (`src/detect.py`) |
 | Tracking | **Filtro de Kalman do zero** (estado [x,y,vx,vy]) + matching guloso por centroide predito (`src/tracker.py`) |
+| Classificação | **SNN (LIF + surrogate gradient)** classifica o crop de eventos de cada track: car/person/bike/truck, com voto por maioria temporal (`src/blob_snn.py`) — 88% acc |
 | Contagem | Cruzamento de linha com margem anti-ruído (`src/demo.py`) |
+
+## Dados do classificador
+
+`src/harvest_blobs.py` baixa vídeos por classe da web, roda o pipeline DVS+detecção e salva o maior blob por frame — **dataset de 2.880 crops de eventos sem nenhuma rotulação manual**.
 
 ## Métricas (vídeo de 30s, tráfego)
 

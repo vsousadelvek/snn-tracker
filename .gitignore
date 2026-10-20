@@ -1,5 +1,7 @@
 __pycache__/
 *.pyc
 raw/
+raw_blobs/
+data_blobs/
 demo/chk.png
 demo/t*.mp4
