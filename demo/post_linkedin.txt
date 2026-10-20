@@ -1,0 +1,42 @@
+=====================================================
+POST — LINKEDIN (anexar tracking_h264.mp4)
+=====================================================
+
+Detecção, rastreamento e contagem de veículos — sem nenhuma CNN. Só eventos e geometria.
+
+Terceiro projeto da minha série de computação neuromórfica: um tracker multi-objeto que opera diretamente sobre o stream de eventos de uma câmera DVS simulada.
+
+O que o vídeo mostra:
+
+→ Esquerda: câmera com bounding boxes, IDs e trilhas
+→ Centro: como o sensor "enxerga" — só eventos. Carro parado literalmente desaparece do sinal
+→ Direita: estatísticas ao vivo, contagem por direção de cruzamento
+
+A arquitetura, tudo implementado do zero:
+
+• Simulador DVS: contraste temporal em log-intensidade com referência adaptativa por pixel
+• Detecção: objetos em movimento formam clusters de eventos → dilatação + connected components + filtro de densidade
+• Tracking: filtro de Kalman escrito do zero em NumPy (estado [x,y,vx,vy], velocidade constante) + matching por centroide predito
+• Contagem: cruzamento de linha virtual com margem anti-ruído
+
+Resultados no vídeo de 30s: ~4 tracks simultâneos limpos, contagem por direção estável, zero rede neural envolvida — latência mínima e zero treino.
+
+O insight que mais me marcou: quando a câmera só vê movimento, "detectar objeto" deixa de ser um problema de classificação e vira um problema de clustering. É uma mudança de paradigma completa em relação ao pipeline frame-a-frame que domina a indústria — e é assim que hardware neuromórfico real (Prophesee, iniVation) funciona em drones e ADAS.
+
+Série completa no GitHub — OCR com SNN, gestos por eventos e agora tracking:
+github.com/vsousadelvek/snn-tracker
+github.com/vsousadelvek/snn-gesture
+github.com/vsousadelvek/snn-ocr
+
+Estou aberto a oportunidades em visão computacional — se conhecem vagas ou freelas, adoraria conversar 👇
+
+#ComputerVision #Neuromorphic #EventCamera #ObjectTracking #KalmanFilter #OpenToWork
+
+=====================================================
+NOTAS PRA VOCÊ (não colar)
+=====================================================
+
+- Anexe demo/tracking_h264.mp4 (formato já compatível)
+- O GIF no README do repo anima sozinho se a pessoa clicar no link
+- Métricas honestas no README: 53 tracks, 3.3s duração média — se
+  perguntarem em entrevista, você sabe explicar exatamente os números
