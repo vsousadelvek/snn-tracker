@@ -2,6 +2,8 @@
 
 Detecção, rastreamento e contagem de objetos **sem CNN** — usando apenas um stream de eventos de uma câmera neuromórfica simulada (DVS).
 
+![Event-Tracker em ação](demo/tracking.gif)
+
 ## A ideia
 
 Câmeras de eventos só enxergam o que muda. Objetos em movimento aparecem como **clusters densos de eventos** — então a detecção vira um problema de clustering espacial, não de classificação de imagem. Este é um problema de pesquisa real (event-based tracking) implementado do zero:

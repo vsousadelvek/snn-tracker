@@ -38,7 +38,7 @@ class Track:
 
 
 class Tracker:
-    def __init__(self, max_dist=35, max_misses=12, min_hits=8):
+    def __init__(self, max_dist=40, max_misses=20, min_hits=8):
         self.tracks = []
         self.max_dist, self.max_misses, self.min_hits = \
             max_dist, max_misses, min_hits

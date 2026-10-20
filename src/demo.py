@@ -42,7 +42,10 @@ def main():
         events = dvs.process(frame)
         ev_trail.append(events)
 
-        boxes = detect(events, min_area=20, dilate_k=7)
+        # detecta em eventos acumulados (ultimos 3 frames): blobs mais densos
+        acc_ev = np.clip(sum(ev_trail), -1, 1)
+        boxes = [b for b in detect(acc_ev, min_area=30, dilate_k=7)
+                 if b[2] >= 5 and b[3] >= 5]
         tracks = tracker.step(boxes)
 
         # painel camera + tracking
