@@ -35,16 +35,19 @@ def main():
     counted = set()
     line_y = EV_H // 2
 
+    n_frames = 0
     while True:
         ok, frame = cap.read()
         if not ok:
             break
+        n_frames += 1
         events = dvs.process(frame)
         ev_trail.append(events)
 
         # detecta em eventos acumulados (ultimos 3 frames): blobs mais densos
         acc_ev = np.clip(sum(ev_trail), -1, 1)
-        boxes = [b for b in detect(acc_ev, min_area=30, dilate_k=7)
+        boxes = [b for b in detect(acc_ev, min_area=30, dilate_k=7,
+                                   min_density=0.10)
                  if b[2] >= 5 and b[3] >= 5]
         tracks = tracker.step(boxes)
 
@@ -99,7 +102,17 @@ def main():
 
     cap.release()
     out.release()
-    print(f"salvo: {args.out} | subindo={count_up} descendo={count_down}")
+
+    # metricas de qualidade do tracker
+    all_t = tracker.tracks + tracker.dead
+    conf_t = [t for t in all_t if t.hits >= tracker.min_hits]
+    lifetimes = [t.hits + t.misses for t in conf_t]
+    dur_s = sum(lifetimes) / max(len(lifetimes), 1) / fps
+    print(f"salvo: {args.out}")
+    print(f"metricas: {len(conf_t)} tracks validos | "
+          f"duracao media {dur_s:.1f}s | "
+          f"ids/min {len(conf_t) / (n_frames / fps / 60):.0f} | "
+          f"subindo={count_up} descendo={count_down}")
 
 
 if __name__ == "__main__":

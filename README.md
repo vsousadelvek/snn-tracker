@@ -20,9 +20,14 @@ video -> eventos ON/OFF (DVS simulado)
 | Etapa | Implementação |
 |---|---|
 | Eventos | Contraste temporal em log-intensidade, ref adaptativa (`src/events.py`) |
-| Detecção | Dilatação morfológica + connected components (`src/detect.py`) |
-| Tracking | Matching guloso por distância de centroide, velocidade amortecida, trilhas (`src/tracker.py`) |
+| Detecção | Dilatação morfológica + connected components + filtro de densidade de eventos (`src/detect.py`) |
+| Tracking | **Filtro de Kalman do zero** (estado [x,y,vx,vy]) + matching guloso por centroide predito (`src/tracker.py`) |
 | Contagem | Cruzamento de linha com margem anti-ruído (`src/demo.py`) |
+
+## Métricas (vídeo de 30s, tráfego)
+
+- 53 tracks válidos | duração média 3.3s | ~106 IDs/min
+- Detecção robusta a câmera fixa; requer cena estática (comportamento DVS real)
 
 ## Uso
 
